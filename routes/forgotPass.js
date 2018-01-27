@@ -24,16 +24,16 @@ router.route('/')
                 var transporter = nodemailer.createTransport({
                     service: 'yahoo',
                     auth: {
-                        user: 'EXAMPLE@EXAMPLE.COM',
-                        pass: 'PASSWORD',
+                        user: 'rottenpotatoes@yahoo.com',
+                        pass: 'blahblah@123',
                     }
                 });
                 var mailOptions = {
-                    from: 'EXAMPLE@EXAMPLE.COM',
+                    from: 'rottenpotatoes@yahoo.com',
                     to: data.email,
                     subject: 'Forgot Password',
                     html: '<p>Go here to reset password<p>' +
-                    '<br>' + '<a href="http://localhost:3000/forgot/new"><p>Rotten Potatoes reset password</p></a>'
+                    '<br>' + '<a href="https://rotten-potatoes-90454.herokuapp.com/forgot/new"><p>Rotten Potatoes reset password</p></a>'
                 };
                 transporter.sendMail(mailOptions, function(error, info) {
                     if(error) {
@@ -64,17 +64,11 @@ router.route('/new')
                 where: {
                     email: emailAddress
                 }
-            }).then(function(error, info) {
-                if(error) {
-                    console.log(error);
-                    // flash error here? password not updated or something
-                } else {
-                    console.log("Password Updated:" + info.response);
-                    res.redirect('/login');
-                }
+            }).then(function() {
+                res.redirect('/login');
             });
         } else {
-            return "Your passwords don't match";
+            // flash message? passwords don't match
         }
     })
 module.exports = router;

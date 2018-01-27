@@ -8,7 +8,7 @@ module.exports = function(app,passport){
   var bestGames = [];
   var worstGames = [];
   var bestGamesList
-
+  
   /* GET home page. */
   router.get('/', function(req, res) {
 
@@ -16,54 +16,41 @@ module.exports = function(app,passport){
       limit: 10,
       order: [['original_release_date', 'DESC']]
     }).then(function(data){
-      var firstname = '';
-      if(req.user){
-        firstname = req.user.firstname;
-      }
+      db.game_tables.findAll({
+        order: [['average']]
+      }).then(function(childData){
+        var worstTable = getSortedTable(childData);
+        var bestTable = getSortedTable(childData.reverse());
 
-      res.render('./home/index', {newGames: data, loggedin: req.isAuthenticated(),firstname: firstname});
+        var firstname = '';
+        if(req.user){
+          firstname = req.user.firstname;
+        }
 
+        res.render('./home/index', {topTen: bestTable, worstGames: worstTable, newGames: data, loggedin: req.isAuthenticated(),firstname: firstname});
+
+      })
+      
     })
 
-    // db.reviews_tables.findAll({
-    //   order: [['average', 'DESC']]
-    // }).then(function(data){
-    //   var bestGames = getGamesArray(data);
-    //   console.log(bestGames);
-    //   db.game_tables.findAll({
-    //     limit: 10,
-    //     order: [[db.reviews_tables, 'average']],
-    //     where: {
-    //       id: bestGames,
-    //     }, include: [db.reviews_tables]
-    //   }).then(function(childData){
-    //     bestGamesList = childData;
-    //     db.reviews_tables.findAll({
-    //       order: ['average']
-    //     }).then(function(childChilddata){
-    //       // console.log(childChilddata)
-    //       var worstGames = getGamesArray(childChilddata);
-    //       console.log(worstGames);
-    //       db.game_tables.findAll({
-    //         limit: 10,
-    //         order: [[db.reviews_tables, 'average', 'DESC']],
-    //         where: {
-    //           id: worstGames,
-    //         }, include: [db.reviews_tables]
-    //       }).then(function(childChildChildData){
-    //         // console.log(childData);
+    //function to get the list of best and worst games
+    var getSortedTable = function(data){
+      var tableGameId = [];
+      var table = [];
 
-    //         var firstname = '';
-    //         if(req.user){
-    //           firstname = req.user.firstname;
-    //         }
-
-    //         res.render('./home/index', {worstGames: bestGamesList, topTen: childChildChildData, loggedin: req.isAuthenticated(),firstname: firstname});
-
-    //       })
-    //     })
-    //   })
-    // })
+      for (i = 0; i < data.length; i++){
+        var dataExists = tableGameId.indexOf(data[i].dataValues.id);
+        if (data[i].dataValues.average !== null){
+          if (dataExists === -1){
+            if (table.length < 10){
+              table.push({gameId: data[i].dataValues.id, gameName: data[i].dataValues.name, average: data[i].dataValues.average})
+              tableGameId.push(data[i].dataValues.id);
+            }
+          }
+        }
+      };
+      return table;
+    }
   });
 
   /* GET specific game info */
@@ -82,7 +69,6 @@ module.exports = function(app,passport){
 
 
       var averages = getAverage(data.dataValues.reviews_tables);
-      console.log(averages);
       res.render('./home/game', { 
         overallScore: averages[4],
         replayability: averages[2],
@@ -90,7 +76,7 @@ module.exports = function(app,passport){
         soundtrack: averages[3],
         gameTitle: data.name, 
         gameplay: averages[1],
-        gameImage: data.image_thumbnail, 
+        gameImage: data.image_original, 
         gameDescription: data.description, 
         gameid: gameID,
 
@@ -102,8 +88,6 @@ module.exports = function(app,passport){
 
   /* GET list of all games we have on record */
   router.get('/games', function(req, res) {
-    console.log("get route"); //this part works
-      // console.log(db.game_tables);
       var firstname = '';
       if(req.user){
         firstname = req.user.firstname;
@@ -116,9 +100,23 @@ module.exports = function(app,passport){
     })
   });
 
-  //route for search results, added by Leo 1.17.18
+  /*SEARCH FOR GAMES*/
+  router.get('/search', function(req,res){
+    var firstname = '';
+    if(req.user){
+      firstname = req.user.firstname;
+    }
+    db.game_tables.findAll({
+        where: {
+          name: {
+            $like: '%' + req.query.searchTerm + '%'
+          }
+        }
+      }).then(function(data){
+        res.render('./home/search', {title: 'game list',  gamesList: data, loggedin: req.isAuthenticated(),firstname: firstname});
+      })
 
-  router.get('/search/:filter', require('../public/javascripts/apiCall').getGames);
+  });
 
 
   /* DISPLAY ACCOUNT DETAILS */
@@ -129,7 +127,6 @@ module.exports = function(app,passport){
             userId: req.user.id,
         }, include: [db.game_tables],
     }).then(function(data){
-      console.log(data)
       var firstname = '';
       if(req.user){
         firstname = req.user.firstname;
@@ -143,6 +140,69 @@ module.exports = function(app,passport){
       req.logout();
       res.render('./logout/logout');
   });
+
+   /* AUTOCOMPLETE */
+  router.get('/search/auto',function(req, res) {
+     
+      var query = req.query.term;
+      console.log('Query:' + query);
+      db.game_tables.findAll({
+        where: {
+          name: {
+            $like: '%' + query + '%'
+          }
+        }
+      }).then(function(data){
+        console.log('data:' + data.length);
+        var autoCompleteOptions = [];
+        for (i=0;i < data.length;i++){
+        	var game = {
+        		value: 'games/' + data[i].id,
+        		label: data[i].name
+        	}
+
+          autoCompleteOptions.push(game);
+        }
+
+        res.send(autoCompleteOptions);
+      })
+
+
+  });
+
+  // Add news game external db to our game database
+  router.post("/games/new", function(req, res){
+    var firstname = '';
+    if(req.user){
+      firstname = req.user.firstname; 
+    }
+    
+    db.game_tables.findOne({
+      where: {
+        external_id: req.body.game.external_id
+      }
+    }).then(function(data){
+      if (data === null){
+        db.game_tables.create({
+          name: req.body.game.name, 
+          description: req.body.game.description,
+          image_thumbnail: req.body.game.image_thumbnail,
+          image_original: req.body.game.image_original,
+          external_id: req.body.game.external_id,
+          original_release_date: req.body.game.original_release_date,
+        }).then(function(result){
+          var url = "/games/" + result.dataValues.id;
+          res.send({url:url})
+        })
+      }
+    })
+  })
+
+  var externalSearch = require('./externalSearch.js');
+   /* get external games */
+  router.get('/external/search',externalSearch);
+
+
 
 
   //function to get the average ratings of all reviews for a specific game
@@ -174,11 +234,11 @@ module.exports = function(app,passport){
     var avg_average = total_average/table.length
 
     var avgTable = [];
-    avgTable.push(avg_graphics_rating);
-    avgTable.push(avg_game_play_rating);
-    avgTable.push(avg_replayability_rating);
-    avgTable.push(avg_soundtrack_rating);
-    avgTable.push(avg_average);
+    avgTable.push(avg_graphics_rating.toFixed(2));
+    avgTable.push(avg_game_play_rating.toFixed(2));
+    avgTable.push(avg_replayability_rating.toFixed(2));
+    avgTable.push(avg_soundtrack_rating.toFixed(2));
+    avgTable.push(avg_average.toFixed(2));
 
     return avgTable;
   }
@@ -189,13 +249,11 @@ module.exports = function(app,passport){
     var indexGame = 0;
     for (var i = 0; i < data.length; i++){
       indexGame = gamesList.indexOf(data[i].dataValues.gameTableId);
-      // console.log(indexGame);
       if (indexGame = -1){
         gamesList.push(data[i].dataValues.gameTableId);
       }
     }
     var newGamesList = gamesList.slice(9);
-    console.log(newGamesList)
     return newGamesList;
   }
 

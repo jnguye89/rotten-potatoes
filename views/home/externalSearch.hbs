@@ -1,0 +1,43 @@
+{{!-- Swapping header based on whether user is looged in --}}
+{{#if loggedin}}
+    {{> header_loggedin}}
+{{else}}
+    {{> header}}
+{{/if}}
+
+{{!-- Display list of all games in database --}}
+<h3>Search Results>></h3>
+<p>Click on game titles below to view details.</p>
+
+<div class = "card">
+	<h5 class = "card-header">Add A New Game</h5>
+	<div class ="card-body">
+        <p>If there is a game that you have searched for that is not already in our database, use this search block to search Giant Bomb. Clicking on the title will add it to our database.</p>
+        <form class="form-inline my-2 my-lg-0" id="externalSearchSubmit" method="get" name="searchSubmit" action="/external/search">
+            <input id="external-search" class="form-control mr-sm-2 w-50" type="search" placeholder="Search Game Titles to Add" aria-label="Search" name="externalSearchTerm">
+            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+        </form>
+    </div>
+</div>
+<br>
+
+<table id="gamelist">
+    <tr>
+        <th>Image</th>
+        <th>Game Name</th>
+        <th>Description</th>
+    </tr>
+    {{#each games}}
+    <tr>
+        <td style="width:100px"><img class = "list_thumb" src="{{this.image_thumbnail}}"></td>
+        <td style="width:180px"><a data-external_id="{{this.external_id}}" data-name="{{this.name}}" data-description="{{this.description}}" data-image_thumbnail="{{this.image_thumbnail}}" data-image_original="{{this.image_original}}" data-original_release_date="{{this.original_release_date}}" href="/" class="new-game">{{this.name}}</a></td>
+        <td>{{this.description}}</td>
+    </tr>
+    {{/each}}
+</table>
+
+		
+
+
+
+

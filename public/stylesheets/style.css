@@ -5,6 +5,8 @@ body {
 
 .container {
   background-color: #d5dfd0;
+  padding-bottom: 16px;
+  padding-top: 16px;
 }
 
 a {
@@ -27,7 +29,6 @@ a {
   margin-top: 30px;
 }
 
-
 h3 {
   font-size: 30px;
   margin-top: 6px;
@@ -38,7 +39,7 @@ h3 {
 
 .carousel {
   width: 100%;
-  height: 320px;
+  height: 400px;
   overflow: hidden;
 }
 
@@ -49,11 +50,10 @@ footer {
   margin-top: 20px;
   color: #fff;
   width:100%;
-  margin-right: -20px;
 }
 
 .carousel-inner .carousel-item {
-  height: 320px;  /* add this */
+  height: 400px;
 }
 
 .carousel-inner .carousel-item .carousel-caption {
@@ -74,8 +74,6 @@ footer {
 }
 
 #gamelist tr:nth-child(even){background-color: #d5dfd0;}
-
-/* #gamelist tr:hover {background-color: #ddd;} */
 
 #gamelist th {
   padding-top: 12px;
@@ -139,7 +137,17 @@ footer {
 
  .card.reviews {
    border: 3px solid #5a5646;
+   border-radius: 8px;
  }
+
+ .card-body.reviews {
+  padding: 20px;
+}
+
+ .card.home {
+  border: 3px solid #5a5646;
+  border-radius: 8px;
+}
 
  h7 {
   color: #5a5646;
@@ -150,3 +158,29 @@ footer {
  form#login {
    margin-top: 20px;
  }
+
+ label > input {
+   visibility: hidden;
+   position: absolute;
+ }
+ label > input + img {
+  cursor: pointer;
+  opacity: 0.5;
+ }
+ label > input:checked + img {
+  opacity: 1;
+ }
+
+ input[type=radio] {
+   margin-right: 30px;
+ }
+
+th {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 20px;
+ }
+
+.card.logout {
+  border: 3px solid #5a5646;
+  border-radius: 8px;
+}

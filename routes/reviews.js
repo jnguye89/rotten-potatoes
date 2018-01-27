@@ -7,13 +7,14 @@ module.exports = function(app,passport){
 
     router.get('/:id', function(req, res) {
         var gameId = req.params.id;
+        var average = 0;
         db.reviews_tables.findAll({
             order: [['id', 'DESC']],
             where: {
                 gameTableid: gameId,
-            }
+            }, include: [db.user]
         }).then(function(data){
-
+            average = getAverage(data)
             var firstname = '';
             if(req.user){
               firstname = req.user.firstname;
@@ -24,6 +25,13 @@ module.exports = function(app,passport){
                     id: gameId,
                 }
             }).then(function(childData){
+                //pushes to the average table of all games
+                db.game_tables.update({
+                    average: average,
+                },{where: {
+                        id: gameId,
+                    }
+                })
                 res.render('./reviews/index', {title: 'Reviews', gameReviews:data, gameData: childData, loggedin: req.isAuthenticated(),firstname: firstname});
             })
             
@@ -33,6 +41,7 @@ module.exports = function(app,passport){
     /* POST review form data */
     router.post('/api', function(req, res) {
         // THIS IS WHERE THE REVIEW FORM GOES
+        console.log(req.body);
        
         var firstname = '';
         if(req.user){
@@ -41,15 +50,18 @@ module.exports = function(app,passport){
 
         
         db.reviews_tables.create({
-            comment: req.body.description,
-            graphics_rating: req.body.graphics,
-            game_play_rating: req.body.gameplay,
-            replayability: req.body.replayability,
-            soundtrack: req.body.soundtrack,
-            average: req.body.average,
-            gameTableId: req.body.gameId, 
+            comment: req.body.review.description,
+            graphics_rating: req.body.review.graphics,
+            game_play_rating: req.body.review.gameplay,
+            replayability: req.body.review.replayability,
+            soundtrack: req.body.review.soundtrack,
+            average: req.body.review.average,
+            gameTableId: req.body.review.gameId, 
             userId: req.user.id
-        })
+        }).then(function(result){
+            var url = "/reviews/" + result.dataValues.gameTableId;
+            res.send({url:url})
+          })
     });
 
     /* GET edit page */

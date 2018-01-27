@@ -65,22 +65,83 @@ $("document").ready(function () {
 			console.log(average);
 			description = $("#description").val();
 
+			var review = {
+				gameId: gameId,
+				gameplay: gameplay,
+				replayability: replayability,
+				graphics: graphics,
+				soundtrack: soundtrack,
+				description: description,
+				average: average
+			}
+
 			$.ajax({
 				url: '/reviews/api',
 				method: 'POST',
 				data: {
-					gameId: gameId,
-					gameplay: gameplay,
-					replayability: replayability,
-					graphics: graphics,
-					soundtrack: soundtrack,
-					description: description,
-					average: average
+					review: review,
 				},
 				success: location.href = '/reviews' + '/' + gameId
-			}).then(function() {
-				setTimeout(location.reload(), 3000);
+			}).then(function(response) {
+				location.href = response.url;
 			});
+
+
 		});
+// Search Box
+// ===========================================================================
+
+	// $(function(){	
+		$("#searchBox").autocomplete({
+			source: function(request,response){
+				$.ajax({
+					url: '/search/auto',
+					data:{
+						term:request.term
+					},
+					success: function(data){
+						response (data);
+					}
+				});
+
+			},
+			select: function( event, ui ) { 
+            	window.location.href = ui.item.value;
+        	},
+			minLength: 2
+		});
+	// })
+
+		$(".new-game").on("click",function(){
+
+			var formattedDate = new Date($(this).data("original_release_date"));
+			formattedDate = moment(formattedDate).format("YYYY-MM-DD");
+
+			var game = {
+				external_id: $(this).data("external_id"),
+				name: $(this).data("name"),
+				description: $(this).data("description"),
+				image_thumbnail: $(this).data("image_thumbnail"),
+				image_original: $(this).data("image_original"),
+				original_release_date: formattedDate
+			}
+			
+			$.ajax({
+				url: '/games/new',
+				method: 'POST',
+				data: {
+					game: game
+				}
+			}).then(function(response) {
+				location.href = response.url;
+			});
+
+			//console.log("Game ext id: " + game.original_release_date);
+
+
+		})
+
+
+
 // ===========================================================================
 }); // end of document ready no code below here
